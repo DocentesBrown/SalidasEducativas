@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biblioteca de Salidas Educativas</title>
+  <meta name="description" content="Biblioteca digital de salidas educativas para la comunidad docente. Buscá por nivel, materia, distrito, duración y más." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Saltar al contenido</a>
+  <div class="page-shell" aria-hidden="true">
+    <span class="blob blob--1"></span>
+    <span class="blob blob--2"></span>
+    <span class="blob blob--3"></span>
+    <span class="grid-fade"></span>
+  </div>
+
+  <header class="hero">
+    <div class="container hero__inner">
+      <section class="hero__content">
+        <div class="brand-pill">
+          <span class="brand-pill__mark">DB</span>
+          <span id="brandName">Docentes Brown</span>
+        </div>
+
+        <div class="hero__copy card card--hero">
+          <div class="hero__eyebrow-row">
+            <span class="eyebrow">Biblioteca digital docente</span>
+            <span class="badge badge--outline">Google Sheets + GitHub Pages</span>
+          </div>
+
+          <h1 id="appTitle">Biblioteca de Salidas Educativas</h1>
+          <p id="appSubtitle" class="hero__subtitle">
+            Propuestas listas para explorar, adaptar y usar con más rapidez en la escuela.
+          </p>
+
+          <div class="hero__searchbar">
+            <label class="search-input" for="searchInput">
+              <span class="search-input__icon">⌕</span>
+              <input id="searchInput" type="search" placeholder="Buscar por materia, destino, contenido, distrito o palabra clave..." autocomplete="off" />
+            </label>
+            <button id="shareFiltersBtn" class="btn btn--ghost" type="button">Compartir búsqueda</button>
+            <button id="toggleFiltersBtn" class="btn btn--primary" type="button">Abrir filtros</button>
+          </div>
+
+          <div class="hero__microcopy">
+            <span>Más simple de encontrar.</span>
+            <span>Más fácil de adaptar.</span>
+            <span>Más probable de usar.</span>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <article class="stat-card card">
+            <span class="stat-card__label">Resultados visibles</span>
+            <strong class="stat-card__value" id="statResults">0</strong>
+            <small class="stat-card__hint">Según tus filtros actuales</small>
+          </article>
+          <article class="stat-card card">
+            <span class="stat-card__label">Salidas gratuitas</span>
+            <strong class="stat-card__value" id="statFree">0</strong>
+            <small class="stat-card__hint">Para resolver rápido y con bajo costo</small>
+          </article>
+          <article class="stat-card card">
+            <span class="stat-card__label">Destacadas</span>
+            <strong class="stat-card__value" id="statFeatured">0</strong>
+            <small class="stat-card__hint">Modelos sugeridos para arrancar</small>
+          </article>
+        </div>
+      </section>
+
+      <aside class="hero__spotlight card card--spotlight">
+        <div class="hero__spotlight-top">
+          <span class="eyebrow">Pensada para la comunidad</span>
+          <span class="badge badge--soft">Lista para crecer</span>
+        </div>
+        <h2>Una biblioteca viva de salidas educativas</h2>
+        <p>
+          La meta es que cualquier docente llegue rápido a una propuesta viable, con sentido pedagógico,
+          datos logísticos y archivos listos para descargar o adaptar.
+        </p>
+
+        <div class="spotlight-stack">
+          <article class="mini-panel">
+            <strong>Exploración rápida</strong>
+            <span>Buscador central + filtros facetados</span>
+          </article>
+          <article class="mini-panel">
+            <strong>Fichas claras</strong>
+            <span>Curricular, logística, seguridad y recursos</span>
+          </article>
+          <article class="mini-panel">
+            <strong>Backend simple</strong>
+            <span>Editable desde Google Sheets por la comunidad</span>
+          </article>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main id="mainContent" class="container layout">
+    <div id="filtersBackdrop" class="filters-backdrop" aria-hidden="true"></div>
+
+    <aside id="filtersPanel" class="filters card" aria-label="Panel de filtros">
+      <div class="filters__header">
+        <div>
+          <p class="eyebrow">Exploración</p>
+          <h2>Filtros</h2>
+        </div>
+        <div class="filters__header-actions">
+          <button id="resetFiltersBtn" class="btn btn--ghost btn--small" type="button">Limpiar</button>
+          <button id="closeFiltersBtn" class="btn btn--ghost btn--icon" type="button" aria-label="Cerrar filtros">×</button>
+        </div>
+      </div>
+
+      <div id="dataSourceBanner" class="info-banner hidden"></div>
+
+      <div class="quick-chips" id="quickChips"></div>
+
+      <div class="filter-grid">
+        <label class="field">
+          <span>Nivel</span>
+          <select id="filterLevel"></select>
+        </label>
+        <label class="field">
+          <span>Materia</span>
+          <select id="filterSubject"></select>
+        </label>
+        <label class="field">
+          <span>Distrito</span>
+          <select id="filterDistrict"></select>
+        </label>
+        <label class="field">
+          <span>Tipo de salida</span>
+          <select id="filterTripType"></select>
+        </label>
+        <label class="field">
+          <span>Duración</span>
+          <select id="filterDuration"></select>
+        </label>
+        <label class="field">
+          <span>Costo</span>
+          <select id="filterCost"></select>
+        </label>
+        <label class="field">
+          <span>Entorno</span>
+          <select id="filterEnvironment"></select>
+        </label>
+        <label class="field">
+          <span>Accesibilidad</span>
+          <select id="filterAccessibility"></select>
+        </label>
+      </div>
+
+      <details class="advanced-filters" open>
+        <summary>Filtros avanzados</summary>
+        <div class="advanced-filters__content">
+          <label class="field">
+            <span>Localidad</span>
+            <select id="filterLocality"></select>
+          </label>
+          <label class="field">
+            <span>Ordenar por</span>
+            <select id="sortBy">
+              <option value="featured">Destacadas primero</option>
+              <option value="updated_desc">Más recientes</option>
+              <option value="title_asc">Título A-Z</option>
+              <option value="cost_asc">Menor costo estimado</option>
+            </select>
+          </label>
+
+          <div class="checkbox-group">
+            <label class="check"><input type="checkbox" id="filterOnlyFree" /> Solo gratuitas</label>
+            <label class="check"><input type="checkbox" id="filterOnlyFeatured" /> Solo destacadas</label>
+            <label class="check"><input type="checkbox" id="filterPublished" checked /> Solo publicadas</label>
+            <label class="check"><input type="checkbox" id="filterBooking" /> Requieren reserva previa</label>
+          </div>
+        </div>
+      </details>
+
+      <div class="active-filters">
+        <div class="active-filters__header">
+          <span>Filtros activos</span>
+        </div>
+        <div id="activeFilterTags" class="active-filters__tags"></div>
+      </div>
+    </aside>
+
+    <section class="results-section">
+      <div class="results-toolbar card">
+        <div>
+          <p class="eyebrow">Resultados</p>
+          <h2 id="resultsTitle">Explorá la biblioteca</h2>
+          <p class="results-toolbar__lead">Elegí una salida, abrí la ficha y usala como base para adaptar con tu escuela.</p>
+        </div>
+        <div class="results-toolbar__meta">
+          <button id="showFavoritesBtn" class="btn btn--ghost btn--small" type="button">Ver favoritas</button>
+          <span id="lastUpdateText" class="results-toolbar__updated">Sincronizando datos…</span>
+        </div>
+      </div>
+
+      <div id="featuredStrip" class="featured-strip hidden"></div>
+
+      <div id="resultsGrid" class="results-grid" aria-live="polite"></div>
+
+      <div id="emptyState" class="empty-state card hidden">
+        <div class="empty-state__emoji">🧭</div>
+        <h3>No encontramos salidas con esos filtros</h3>
+        <p>Probá limpiar filtros o ampliar la búsqueda con otra materia, distrito o tipo de salida.</p>
+        <button id="emptyResetBtn" class="btn btn--primary" type="button">Limpiar filtros</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <div class="site-footer__inner card">
+      <div>
+        <strong>Docentes Brown · Biblioteca de Salidas Educativas</strong>
+        <p>Una herramienta abierta para que más docentes se animen a organizar salidas educativas con menos fricción y más claridad.</p>
+      </div>
+      <div class="site-footer__tags">
+        <span class="filter-tag">Frontend en GitHub</span>
+        <span class="filter-tag">Backend en Google Sheets</span>
+        <span class="filter-tag">Diseño responsive</span>
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="detailModal" class="modal">
+    <article class="modal__sheet">
+      <button id="closeModalBtn" class="modal__close" type="button" aria-label="Cerrar detalle">×</button>
+      <div id="modalContent"></div>
+    </article>
+  </dialog>
+
+  <template id="cardTemplate">
+    <article class="trip-card card">
+      <div class="trip-card__glow" aria-hidden="true"></div>
+      <div class="trip-card__top">
+        <div class="trip-card__badges"></div>
+        <button class="favorite-btn" type="button" title="Guardar como favorita" aria-label="Guardar como favorita">♡</button>
+      </div>
+      <h3 class="trip-card__title"></h3>
+      <p class="trip-card__summary"></p>
+      <div class="trip-card__meta"></div>
+      <div class="trip-card__footer">
+        <button class="btn btn--primary trip-card__open" type="button">Ver ficha</button>
+        <a class="btn btn--ghost trip-card__pdf hidden" target="_blank" rel="noopener noreferrer">PDF</a>
+      </div>
+    </article>
+  </template>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
