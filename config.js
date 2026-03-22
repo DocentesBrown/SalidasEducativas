@@ -5,7 +5,7 @@ window.APP_CONFIG = {
 
   // Opción 1: pegá el ID de tu Google Sheet y el nombre exacto de la pestaña principal.
   // Ejemplo de ID: https://docs.google.com/spreadsheets/d/ESTE_ES_EL_ID/edit
-  spreadsheetId: "1Z_O_FKdd69bR6CkFy_jLtrCeSIUGtwU0",
+  spreadsheetId: "1Bwz8IKYVLPtIuHQluopOWodLLHI09iCD",
   sheetName: "salidas",
 
   // Opción 2: si preferís publicar la hoja como CSV, pegá la URL directa acá.
