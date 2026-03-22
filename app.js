@@ -89,11 +89,10 @@
       locality: "",
       onlyFree: false,
       onlyFeatured: false,
-      publishedOnly: true,
       bookingRequired: false,
       sortBy: "featured",
     },
-    sourceMode: "demo",
+    sourceMode: "ready",
     favorites: new Set(loadFavorites())
   };
 
@@ -101,9 +100,10 @@
     appTitle: document.getElementById("appTitle"),
     appSubtitle: document.getElementById("appSubtitle"),
     brandName: document.getElementById("brandName"),
-    dataSourceBanner: document.getElementById("dataSourceBanner"),
     resultsGrid: document.getElementById("resultsGrid"),
     emptyState: document.getElementById("emptyState"),
+    emptyStateTitle: document.getElementById("emptyStateTitle"),
+    emptyStateText: document.getElementById("emptyStateText"),
     searchInput: document.getElementById("searchInput"),
     resultsTitle: document.getElementById("resultsTitle"),
     activeFilterTags: document.getElementById("activeFilterTags"),
@@ -126,7 +126,6 @@
     filterLocality: document.getElementById("filterLocality"),
     filterOnlyFree: document.getElementById("filterOnlyFree"),
     filterOnlyFeatured: document.getElementById("filterOnlyFeatured"),
-    filterPublished: document.getElementById("filterPublished"),
     filterBooking: document.getElementById("filterBooking"),
     sortBy: document.getElementById("sortBy"),
     quickChips: document.getElementById("quickChips"),
@@ -136,9 +135,7 @@
     emptyResetBtn: document.getElementById("emptyResetBtn"),
     closeModalBtn: document.getElementById("closeModalBtn"),
     shareFiltersBtn: document.getElementById("shareFiltersBtn"),
-    showFavoritesBtn: document.getElementById("showFavoritesBtn"),
-    closeFiltersBtn: document.getElementById("closeFiltersBtn"),
-    filtersBackdrop: document.getElementById("filtersBackdrop")
+    showFavoritesBtn: document.getElementById("showFavoritesBtn")
   };
 
   const QUICK_CHIPS = [
@@ -188,20 +185,17 @@
       element.addEventListener("change", (event) => {
         state.filters[key] = event.target.value;
         applyFilters();
-        if (window.innerWidth <= 1080 && key !== "sortBy") closeFiltersPanel();
       });
     });
 
     [
       [els.filterOnlyFree, "onlyFree"],
       [els.filterOnlyFeatured, "onlyFeatured"],
-      [els.filterPublished, "publishedOnly"],
       [els.filterBooking, "bookingRequired"]
     ].forEach(([element, key]) => {
       element.addEventListener("change", (event) => {
         state.filters[key] = event.target.checked;
         applyFilters();
-        if (window.innerWidth <= 1080) closeFiltersPanel();
       });
     });
 
@@ -209,16 +203,7 @@
     els.emptyResetBtn.addEventListener("click", resetFilters);
     els.closeModalBtn.addEventListener("click", () => els.detailModal.close());
     els.toggleFiltersBtn.addEventListener("click", () => {
-      if (window.innerWidth <= 1080) {
-        openFiltersPanel();
-      } else {
-        els.filtersPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-    els.closeFiltersBtn?.addEventListener("click", closeFiltersPanel);
-    els.filtersBackdrop?.addEventListener("click", closeFiltersPanel);
-    window.addEventListener("resize", () => {
-      if (window.innerWidth > 1080) closeFiltersPanel();
+      els.filtersPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     els.shareFiltersBtn.addEventListener("click", copyShareUrl);
     els.showFavoritesBtn.addEventListener("click", () => {
@@ -237,10 +222,6 @@
       );
       if (clickedOutside) els.detailModal.close();
     });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeFiltersPanel();
-    });
   }
 
   async function loadData() {
@@ -249,31 +230,27 @@
       let records = [];
       if (APP_CONFIG.csvUrl) {
         records = await loadFromCsv(APP_CONFIG.csvUrl);
-        state.sourceMode = "csv";
+        state.sourceMode = "ready";
       } else if (APP_CONFIG.spreadsheetId) {
         records = await loadFromGoogleSheets(APP_CONFIG.spreadsheetId, APP_CONFIG.sheetName || "salidas");
-        state.sourceMode = "gviz";
+        state.sourceMode = "ready";
       } else {
-        records = DEMO_RECORDS;
-        state.sourceMode = "demo";
+        state.sourceMode = "unconfigured";
       }
 
       state.records = records.map(normalizeRecord).filter(Boolean);
-      if (!state.records.length) {
-        state.records = DEMO_RECORDS.map(normalizeRecord);
-        state.sourceMode = "demo-empty";
+      if (!state.records.length && state.sourceMode === "ready") {
+        state.sourceMode = "empty";
       }
 
       populateFilters(state.records);
       applyFilters();
-      renderSourceBanner();
     } catch (error) {
       console.error("Error al cargar datos:", error);
-      state.records = DEMO_RECORDS.map(normalizeRecord);
-      state.sourceMode = "demo-error";
+      state.records = [];
+      state.sourceMode = "error";
       populateFilters(state.records);
       applyFilters();
-      renderSourceBanner(error);
     } finally {
       setLoadingState(false);
     }
@@ -389,7 +366,7 @@
     }
     if (filters.onlyFree) results = results.filter((item) => item.free);
     if (filters.onlyFeatured) results = results.filter((item) => item.featured);
-    if (filters.publishedOnly) results = results.filter((item) => item.published);
+    results = results.filter((item) => item.published);
     if (filters.bookingRequired) results = results.filter((item) => item.booking_required);
     if (state.favoritesOnly) results = results.filter((item) => state.favorites.has(String(item.id)));
 
@@ -404,22 +381,13 @@
     updateQuickChipStates();
   }
 
-  function openFiltersPanel() {
-    els.filtersPanel.classList.add("is-open");
-    document.body.classList.add("filters-open");
-  }
-
-  function closeFiltersPanel() {
-    els.filtersPanel.classList.remove("is-open");
-    document.body.classList.remove("filters-open");
-  }
-
   function renderResults() {
     els.resultsGrid.innerHTML = "";
     const results = state.filtered;
-    els.resultsTitle.textContent = state.favoritesOnly ? "Tus salidas favoritas" : `${results.length} salida${results.length === 1 ? "" : "s"} para explorar`;
+    els.resultsTitle.textContent = state.favoritesOnly ? "Tus salidas favoritas" : `Explorá la biblioteca (${results.length})`;
 
     if (!results.length) {
+      updateEmptyState();
       els.emptyState.classList.remove("hidden");
       return;
     }
@@ -490,7 +458,6 @@
   }
 
   function openDetail(record) {
-    closeFiltersPanel();
     const tags = [record.level, record.subject, record.target_grades, record.trip_type, record.duration, record.cost_label].filter(Boolean);
     const sections = [
       { title: "Propósito pedagógico", content: record.pedagogical_purpose || "No especificado." },
@@ -593,7 +560,6 @@
         }
         syncControlsFromState();
         applyFilters();
-        if (window.innerWidth <= 1080) closeFiltersPanel();
       });
       els.quickChips.appendChild(button);
     });
@@ -628,23 +594,19 @@
       : "Última actualización: sin dato";
   }
 
-  function renderSourceBanner(error) {
-    const messages = {
-      demo: "Estás viendo la versión demo. Para conectar Google Sheets, pegá el ID de tu hoja en config.js.",
-      "demo-empty": "La hoja se leyó, pero no devolvió salidas válidas. Se muestra una demo para que la UI no quede vacía.",
-      "demo-error": `No se pudo leer Google Sheets y se activó una demo local.${error ? ` Detalle: ${error.message}` : ""}`,
-      csv: "Conectado a un CSV publicado de Google Sheets.",
-      gviz: `Conectado a Google Sheets: hoja “${APP_CONFIG.sheetName || "salidas"}”.`
-    };
-
-    const message = messages[state.sourceMode];
-    if (!message) {
-      els.dataSourceBanner.classList.add("hidden");
+  function updateEmptyState() {
+    if (state.sourceMode === "error") {
+      els.emptyStateTitle.textContent = "No pudimos cargar el catálogo en este momento";
+      els.emptyStateText.textContent = "Probá actualizar la página dentro de un rato.";
       return;
     }
-
-    els.dataSourceBanner.textContent = message;
-    els.dataSourceBanner.classList.remove("hidden");
+    if (state.sourceMode === "unconfigured" || state.sourceMode === "empty") {
+      els.emptyStateTitle.textContent = "Todavía no hay salidas publicadas";
+      els.emptyStateText.textContent = "Pronto vas a encontrar nuevas propuestas listas para consultar y adaptar.";
+      return;
+    }
+    els.emptyStateTitle.textContent = "No encontramos salidas con esos filtros";
+    els.emptyStateText.textContent = "Probá limpiar filtros o ampliar la búsqueda con otra materia, distrito o tipo de salida.";
   }
 
   function setLoadingState(isLoading) {
@@ -740,7 +702,6 @@
       locality: "",
       onlyFree: false,
       onlyFeatured: false,
-      publishedOnly: true,
       bookingRequired: false,
       sortBy: "featured",
     };
@@ -748,7 +709,6 @@
     els.showFavoritesBtn.textContent = "Ver favoritas";
     syncControlsFromState();
     applyFilters();
-    closeFiltersPanel();
   }
 
   function syncControlsFromState() {
@@ -764,7 +724,6 @@
     els.filterLocality.value = state.filters.locality;
     els.filterOnlyFree.checked = state.filters.onlyFree;
     els.filterOnlyFeatured.checked = state.filters.onlyFeatured;
-    els.filterPublished.checked = state.filters.publishedOnly;
     els.filterBooking.checked = state.filters.bookingRequired;
     els.sortBy.value = state.filters.sortBy;
   }
@@ -789,7 +748,7 @@
     keys.forEach((key) => {
       if (params.has(key)) state.filters[key] = params.get(key) || "";
     });
-    ["onlyFree", "onlyFeatured", "publishedOnly", "bookingRequired", "favoritesOnly"].forEach((key) => {
+    ["onlyFree", "onlyFeatured", "bookingRequired", "favoritesOnly"].forEach((key) => {
       if (params.has(key)) {
         const value = params.get(key) === "true";
         if (key === "favoritesOnly") state.favoritesOnly = value;
@@ -824,7 +783,6 @@
       locality: `Localidad: ${value}`,
       onlyFree: "Solo gratuitas",
       onlyFeatured: "Solo destacadas",
-      publishedOnly: "Solo publicadas",
       bookingRequired: "Con reserva previa"
     };
     return labels[key] || String(value);
